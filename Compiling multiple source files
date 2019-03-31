@@ -1,0 +1,52 @@
+在dev c++中创建一个Console Application项目
+项目会自己帮你创建一个.c文件
+创建新文件，点击确定在项目中添加新文件，可将一些头文件如stdio.h，自己要用到的函数头包含在一个创建的.h文件中
+为每个函数的实现方法创建一个.c文件
+
+"head.h"
+
+#include<stdio.h>
+#include<stdlib.h>
+void fun1(void)
+void fun2(void)
+void fun3(void)
+
+
+"fun1.c"
+
+#include<stdio.h>
+void fun1(void)
+{
+printf("this is first funcation\n");
+}
+
+"fun2.c"
+
+#include<stdio.h>
+void fun2(void)
+{
+printf("This is second funcation\n");
+}
+
+"fun3.c"
+
+#include<stdio.h>
+void fun3(void)
+{
+printf("This is third funcation\n");
+}
+
+"main.c"
+
+#include "head.h"
+
+int main(void)
+{
+fun1();
+fun2();
+fun3();
+
+system("pause");
+
+return 0;
+}

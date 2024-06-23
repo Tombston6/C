@@ -1,0 +1,99 @@
+#cmake最低要求
+cmake_minimum_required(VERSION 3.12)
+
+#项目名字
+project(inside_out_sensor_bringup)
+
+#编译器设置
+set(CMAKE_CXX_STANDARD 11)
+
+#如果没设置CMAKE_BUILD_TYPE
+if(NOT CMAKE_BUILD_TYPE) # Release, Debug, MinSizeRel, RelWithDebInfo
+    set(CMAKE_BUILD_TYPE "Release")
+    message(STATUS "Build type not specified; defaulting to ${CMAKE_BUILD_TYPE}")
+else()
+    message(STATUS "Build Type set as: ${CMAKE_BUILD_TYPE}")
+endif()
+
+# set extra compile flags
+## 针对C++的编译选项
+set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -pthread -fPIC -Wall -frtti -fexceptions -ftemplate-backtrace-limit=0")
+# disable warning messages in debug
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -Wno-unused-but-set-variable \
+                    # -Wno-sign-compare -Wno-maybe-uninitialized -Wno-unused-variable")
+
+# 针对C++在Debug模式下的编译选项
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O1 -g -ggdb")    
+
+
+#设置库的输出路径
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/libs/${CMAKE_BUILD_TYPE})
+
+
+message(STATUS "Checking Host System Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+if(NOT CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64" AND
+    NOT CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
+    message(FATAL_ERROR "Unsupported Processor")
+endif()
+
+
+# 添加 OpenCV 库的支持
+find_package(OpenCV REQUIRED)
+MESSAGE(STATUS "OpenCV Version : " ${OpenCV_VERSION})
+
+
+#<target>：需要包含目录的目标。
+#SYSTEM：将目录标记为系统包含目录，可能会抑制某些警告。
+#AFTER|BEFORE：控制包含目录的搜索顺序。
+#INTERFACE、PUBLIC、PRIVATE：指定包含目录的使用范围。
+#dirs...：包含目录的路径。
+#target_include_directories(<target> [SYSTEM] [AFTER|BEFORE]
+#                           [INTERFACE|PUBLIC|PRIVATE] dirs...)
+
+
+#头文件
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/yaml-cpp-0.8.0-${CMAKE_HOST_SYSTEM_PROCESSOR}/include
+)
+
+#链接库
+link_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/yaml-cpp-0.8.0-${CMAKE_HOST_SYSTEM_PROCESSOR}/lib
+)
+
+#定义一个库目标（静态库、动态库或模块库）
+#add_library(<name> [STATIC | SHARED | MODULE] [EXCLUDE_FROM_ALL]
+#            source1 source2 ... sourceN)
+add_library(sensor_bringup SHARED
+    src/StereoCamera.cpp
+    src/IMU.cpp
+    src/RgbCamera.cpp
+    src/Param.cpp
+    # src/Vignetting.cpp
+)
+
+#添加目标之间的依赖关系，确保构建顺序
+#<target>：需要依赖其他目标的目标。
+#<depend-target>：目标所依赖的其他目标。
+#add_dependencies(<target> <depend-target> [<depend-target> ...])
+
+
+#指定目标需要链接的库
+#target_link_libraries(<target> [item1 [item2 [...]]])
+
+target_link_libraries(sensor_bringup
+    yaml-cpp
+    ${OpenCV_LIBS}
+)
+
+#定义一个可执行目标
+add_executable(data_capture main.cpp)
+
+target_link_libraries(data_capture 
+    sensor_bringup
+    yaml-cpp
+    ${OpenCV_LIBS}
+)
